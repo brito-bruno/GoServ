@@ -1,10 +1,6 @@
 import React from 'react'
+import Home from './views/Home'
 
 export default function App(){
-  return (
-    <div style={{padding:20}}>
-      <h1>App React (Frontend)</h1>
-      <p>Monorepo inicial — conecte com a API em <code>/api</code>.</p>
-    </div>
-  )
+  return <Home />
 }
