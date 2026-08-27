@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+.vite/
+.env
+
+# .NET
+bin/
+obj/
+**/*.user
+**/*.suo
+*.vs/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
