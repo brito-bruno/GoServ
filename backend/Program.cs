@@ -6,6 +6,13 @@ using Backend.Data;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
+// Enable CORS for local development (adjust origins in production)
+builder.Services.AddCors(options =>
+{
+	options.AddDefaultPolicy(policy =>
+		policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
 // Configure DbContext with PostgreSQL (connection string in appsettings.json)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (!string.IsNullOrEmpty(connectionString))
@@ -45,6 +52,7 @@ using (var scope = app.Services.CreateScope())
 	}
 }
 
+app.UseCors();
 app.MapControllers();
 
 app.Run();

@@ -1,0 +1,10 @@
+{
+  "name": "goserv-root",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "db:run": "docker-compose up -d db",
+    "db": "docker-compose up -d db",
+    "db:down": "docker-compose down"
+  }
+}

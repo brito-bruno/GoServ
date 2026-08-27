@@ -22,6 +22,14 @@ namespace Backend.Controllers
             return Ok(items);
         }
 
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
+        {
+            var item = _db.MenuItems.Find(id);
+            if (item == null) return NotFound();
+            return Ok(item);
+        }
+
         public class CreateMenuItemDto
         {
             public string Name { get; set; } = string.Empty;
