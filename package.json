@@ -15,6 +15,8 @@
     "db:restore": "powershell -ExecutionPolicy Bypass -File ./scripts/db-restore.ps1",
     "backend": "dotnet run --project ./backend --launch-profile http",
     "test": "dotnet test ./tests/Backend.Tests/Backend.Tests.csproj",
+    "lint": "npm run lint --prefix client && npm run lint --prefix admin",
+    "ci": "dotnet build ./backend/Backend.csproj -c Release && npm run test && npm run lint && npm run build --prefix client && npm run build --prefix admin",
     "client": "npm run dev --prefix client",
     "admin": "npm run dev --prefix admin",
     "client:install": "npm install --prefix client",

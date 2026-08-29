@@ -10,7 +10,7 @@ namespace Backend.Services
         Task<MenuItemDto?> UpdateAsync(int id, UpdateMenuItemDto dto);
         Task<bool> DeleteAsync(int id);
         Task<(byte[] Data, string ContentType)?> GetPhotoAsync(int id);
-        Task<MenuItemDto?> SetPhotoAsync(int id, Stream photoStream, long contentLength);
+        Task<MenuItemDto?> SetPhotoAsync(int id, Stream photoStream, long contentLength, string? contentType, string? fileName);
         Task<bool> ClearPhotoAsync(int id);
     }
 }

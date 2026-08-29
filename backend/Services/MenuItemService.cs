@@ -90,19 +90,23 @@ namespace Backend.Services
             return (item.PhotoData, item.PhotoContentType ?? "image/jpeg");
         }
 
-        public async Task<MenuItemDto?> SetPhotoAsync(int id, Stream photoStream, long contentLength)
+        public async Task<MenuItemDto?> SetPhotoAsync(
+            int id,
+            Stream photoStream,
+            long contentLength,
+            string? contentType,
+            string? fileName)
         {
-            if (contentLength <= 0 || contentLength > ImageConverter.MaxUploadBytes)
-                throw new ArgumentException("A imagem deve ter entre 1 byte e 5 MB.");
+            ImageConverter.ValidateUpload(contentLength, contentType, fileName);
 
             var tracked = await _db.MenuItems.FirstOrDefaultAsync(m => m.Id == id);
             if (tracked is null) return null;
 
             try
             {
-                var (data, contentType) = ImageConverter.ToStoredJpeg(photoStream);
+                var (data, storedType) = ImageConverter.ToStoredJpeg(photoStream);
                 tracked.PhotoData = data;
-                tracked.PhotoContentType = contentType;
+                tracked.PhotoContentType = storedType;
             }
             catch (UnknownImageFormatException)
             {

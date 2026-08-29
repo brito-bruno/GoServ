@@ -81,7 +81,12 @@ namespace Backend.Controllers
             try
             {
                 await using var stream = file.OpenReadStream();
-                var updated = await _service.SetPhotoAsync(id, stream, file.Length);
+                var updated = await _service.SetPhotoAsync(
+                    id,
+                    stream,
+                    file.Length,
+                    file.ContentType,
+                    file.FileName);
                 return updated is null ? NotFound() : Ok(updated);
             }
             catch (ArgumentException ex)

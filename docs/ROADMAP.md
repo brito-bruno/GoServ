@@ -4,7 +4,7 @@ Baseado no planejamento do projeto (12 aulas · defesa 19/11).
 
 ## Onde estamos
 
-Aula 10: **relatórios diários**, tela no admin e **modo kiosk** no client.  
+Aula 10+: relatórios, kiosk, fotos no banco, snapshot SQL, **CI** e checklist manual do cardápio.  
 Próximo: **Aulas 11–12** — testes com usuários, freeze, vídeo e defesa.
 
 ## Entregas por aula (resumo)

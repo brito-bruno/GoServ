@@ -148,6 +148,10 @@ http://localhost:5173/mesa/{token}?kiosk=1
 - Volta ao cardápio após ~90s de inatividade (exceto tela do pedido)  
 - `?kiosk=0` desliga  
 
+Checklist manual do cardápio: [`docs/MANUAL_TEST_MENU.md`](docs/MANUAL_TEST_MENU.md)
+
+CI (GitHub Actions): em cada PR — build/test do backend + lint/build do client e admin. Local: `npm run ci`.
+
 Decisões técnicas: [`docs/DECISIONS.md`](docs/DECISIONS.md)
 
 Seed automático: cardápio, mesas e usuários de demo.
