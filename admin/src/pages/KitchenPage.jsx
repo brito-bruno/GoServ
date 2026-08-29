@@ -1,25 +1,17 @@
 import React from 'react'
 import { api } from '../services/api'
 import { connectKitchenHub } from '../services/kitchenHub'
+import { useContentLoading } from '../components/ui'
 
 const COLUMNS = [
-  { status: 'Received', title: 'Recebidos', next: 'Preparing', nextLabel: 'Preparar' },
-  { status: 'Preparing', title: 'Em preparo', next: 'Ready', nextLabel: 'Pronto' },
-  { status: 'Ready', title: 'Prontos', next: 'Delivered', nextLabel: 'Entregar' },
+  { status: 'Received', title: 'Recebido', next: 'Preparing', nextLabel: 'Iniciar preparo' },
+  { status: 'Preparing', title: 'Em preparo', next: 'Ready', nextLabel: 'Marcar como pronto' },
+  { status: 'Ready', title: 'Pronto', next: 'Delivered', nextLabel: 'Confirmar entrega' },
 ]
 
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-function formatTime(iso) {
-  return new Date(iso).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+function elapsedLabel(iso) {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
+  return `${mins} min`
 }
 
 export default function KitchenPage() {
@@ -27,6 +19,14 @@ export default function KitchenPage() {
   const [error, setError] = React.useState('')
   const [live, setLive] = React.useState('connecting')
   const [busyId, setBusyId] = React.useState(null)
+  const [booting, setBooting] = React.useState(true)
+  const [, setTick] = React.useState(0)
+  useContentLoading(booting)
+
+  React.useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   const upsertOrder = React.useCallback((order) => {
     setOrders((prev) => {
@@ -69,6 +69,8 @@ export default function KitchenPage() {
           setError(e.message || 'Falha ao carregar a cozinha')
           setLive('offline')
         }
+      } finally {
+        if (!cancelled) setBooting(false)
       }
     }
 
@@ -109,11 +111,14 @@ export default function KitchenPage() {
     <section className="kitchen">
       <header className="head">
         <div>
-          <h1>Cozinha</h1>
-          <p>Pedidos em tempo real via SignalR — sem atualizar a página.</p>
+          <h1>Cozinha — Lanchonete do Zé</h1>
+          <p>
+            {orders.length} pedidos abertos
+            {live === 'online' ? ' · CONECTADO ●' : live === 'connecting' ? ' · conectando…' : ' · OFFLINE'}
+          </p>
         </div>
         <span className={`pulse ${live}`}>
-          {live === 'online' ? 'Ao vivo' : live === 'connecting' ? 'Conectando…' : 'Offline'}
+          {live === 'online' ? 'Conectado' : live === 'connecting' ? 'Conectando…' : 'Offline'}
         </span>
       </header>
 
@@ -135,31 +140,32 @@ export default function KitchenPage() {
                 {columnOrders.map((order) => (
                   <article key={order.id} className="ticket">
                     <div className="ticket-head">
-                      <strong>#{order.id}</strong>
-                      <span>{formatTime(order.createdAt)}</span>
+                      <strong>
+                        #{String(order.id).padStart(4, '0')} ·{' '}
+                        {order.tableLabel || 'Sem mesa'}
+                      </strong>
+                      <span className="clock">{elapsedLabel(order.createdAt)}</span>
                     </div>
-                    <p className="table">
-                      {order.tableLabel || 'Sem mesa'} · {formatPrice(order.total)}
-                    </p>
                     <ul>
-                      {order.items.map((item) => (
-                        <li key={item.id}>
-                          <strong>
-                            {item.quantity}× {item.menuItemName}
-                          </strong>
-                          {item.addons?.length > 0 && (
-                            <span className="meta">
-                              {item.addons.map((a) => a.name).join(', ')}
-                            </span>
-                          )}
-                          {item.notes && (
-                            <span className="meta">Obs.: {item.notes}</span>
-                          )}
-                        </li>
-                      ))}
+                      {order.items.map((item) => {
+                        const bits = [
+                          item.notes,
+                          ...(item.addons || []).map((a) => `+ ${a.name}`),
+                        ].filter(Boolean)
+                        return (
+                          <li key={item.id}>
+                            <strong>
+                              {item.quantity}× {item.menuItemName}
+                            </strong>
+                            {bits.length > 0 && (
+                              <span className="obs">{bits.join(' · ')}</span>
+                            )}
+                          </li>
+                        )
+                      })}
                     </ul>
                     {order.customerNotes && (
-                      <p className="note">Pedido: {order.customerNotes}</p>
+                      <span className="obs">Pedido: {order.customerNotes}</span>
                     )}
                     <div className="actions">
                       {col.status === 'Received' && (
@@ -174,6 +180,7 @@ export default function KitchenPage() {
                       )}
                       <button
                         type="button"
+                        className={col.status === 'Ready' ? 'ghost-act' : ''}
                         disabled={busyId === order.id}
                         onClick={() => advance(order, col.next)}
                       >
@@ -197,8 +204,8 @@ export default function KitchenPage() {
           gap: 1rem;
           margin-bottom: 1.25rem;
         }
-        .head h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
-        .head p { margin: 0; color: var(--muted); }
+        .head h1 { margin: 0 0 0.25rem; font-size: 1.35rem; }
+        .head p { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
         .pulse {
           font-family: var(--mono);
           font-size: 0.75rem;
@@ -217,92 +224,95 @@ export default function KitchenPage() {
         .board {
           display: grid;
           grid-template-columns: repeat(3, minmax(220px, 1fr));
-          gap: 0.85rem;
-          align-items: start;
+          gap: 0;
+          align-items: stretch;
+          border: 1px solid var(--line);
+          border-radius: 4px;
+          overflow: hidden;
+          background: var(--panel);
         }
         .column {
-          background: var(--panel);
-          border: 1px solid var(--line);
-          border-radius: var(--radius);
-          padding: 0.75rem;
+          border-right: 1px solid var(--line);
           min-height: 280px;
+          padding: 0;
         }
+        .column:last-child { border-right: none; }
         .column h2 {
-          margin: 0 0 0.75rem;
-          font-size: 0.95rem;
+          margin: 0;
+          font-size: 0.9rem;
           display: flex;
           justify-content: space-between;
-          color: var(--muted);
-          font-weight: 600;
+          padding: 0.65rem 0.75rem;
+          background: var(--bg);
+          border-bottom: 1px solid var(--line);
+          font-weight: 700;
         }
         .column h2 span {
           font-family: var(--mono);
-          color: var(--ink);
+          color: var(--muted);
+          font-weight: 600;
         }
-        .stack { display: grid; gap: 0.65rem; }
+        .stack { display: grid; gap: 0; padding: 0.5rem; }
         .empty {
           margin: 0;
           color: var(--muted);
           font-size: 0.85rem;
-          padding: 0.5rem 0;
+          padding: 0.5rem 0.25rem;
         }
         .ticket {
           background: #fff;
           border: 1px solid var(--line);
-          border-radius: 10px;
-          padding: 0.75rem;
-          animation: pop 0.25s ease;
-        }
-        @keyframes pop {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
+          border-radius: 2px;
+          padding: 0.65rem;
+          margin-bottom: 0.5rem;
         }
         .ticket-head {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.4rem;
+          font-size: 0.9rem;
         }
-        .table {
-          margin: 0 0 0.55rem;
+        .clock {
+          font-family: var(--mono);
+          font-size: 0.75rem;
           color: var(--muted);
-          font-size: 0.85rem;
         }
         ul {
           list-style: none;
           margin: 0;
           padding: 0;
           display: grid;
-          gap: 0.45rem;
+          gap: 0.35rem;
         }
         li {
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
+          gap: 0.2rem;
           font-size: 0.92rem;
         }
-        .meta {
-          color: var(--muted);
-          font-size: 0.8rem;
-        }
-        .note {
-          margin: 0.55rem 0 0;
-          font-size: 0.82rem;
-          color: var(--warn);
+        .obs {
+          display: inline-block;
+          font-size: 0.78rem;
+          background: var(--bg);
+          border-left: 2px solid var(--ink);
+          padding: 0.15rem 0.4rem;
+          margin: 0.1rem 0;
         }
         .actions {
           display: flex;
           justify-content: flex-end;
           gap: 0.4rem;
-          margin-top: 0.75rem;
+          margin-top: 0.65rem;
         }
         .actions button {
           border: none;
-          background: var(--accent);
+          background: var(--ink);
           color: #fff;
-          padding: 0.4rem 0.75rem;
-          border-radius: 8px;
+          padding: 0.45rem 0.7rem;
+          border-radius: 2px;
           font-weight: 600;
           cursor: pointer;
+          font-size: 0.82rem;
         }
         .actions button:disabled { opacity: 0.6; }
         .actions .ghost {
@@ -310,8 +320,14 @@ export default function KitchenPage() {
           color: var(--danger);
           border: 1px solid var(--line);
         }
+        .actions .ghost-act {
+          background: transparent;
+          color: var(--ink);
+          border: 1px solid var(--ink);
+        }
         @media (max-width: 900px) {
           .board { grid-template-columns: 1fr; }
+          .column { border-right: none; border-bottom: 1px solid var(--line); }
         }
       `}</style>
     </section>

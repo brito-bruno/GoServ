@@ -135,4 +135,16 @@ export const api = {
   getAuditLogs: (take = 50) => request(`/audit?take=${take}`),
   getDailyReport: (date) =>
     request(date ? `/reports/daily?date=${encodeURIComponent(date)}` : '/reports/daily'),
+
+  getQrCatalog: () => request('/qr'),
+  rotateDayPasscode: () =>
+    request('/qr/day-passcode/rotate', { method: 'POST' }),
+
+  getPromotions: (liveOnly = false) =>
+    request(liveOnly ? '/promotions?liveOnly=true' : '/promotions'),
+  createPromotion: (payload) =>
+    request('/promotions', { method: 'POST', body: JSON.stringify(payload) }),
+  updatePromotion: (id, payload) =>
+    request(`/promotions/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deletePromotion: (id) => request(`/promotions/${id}`, { method: 'DELETE' }),
 }

@@ -119,11 +119,26 @@ namespace Backend.Migrations
                 b.Property<DateTime?>("ClosedAt").HasColumnType("timestamp with time zone");
                 b.Property<int>("DiningTableId").HasColumnType("integer");
                 b.Property<DateTime>("ExpiresAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("GuestName").HasMaxLength(80).HasColumnType("character varying(80)");
                 b.Property<DateTime>("OpenedAt").HasColumnType("timestamp with time zone");
+                b.Property<decimal?>("SpendingCap").HasPrecision(10, 2).HasColumnType("numeric(10,2)");
                 b.HasKey("Id");
                 b.HasIndex("AccessToken").IsUnique();
                 b.HasIndex("DiningTableId");
                 b.ToTable("TableSessions");
+            });
+
+            modelBuilder.Entity("Backend.Models.DayPasscode", b =>
+            {
+                b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("integer")
+                    .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                b.Property<string>("Code").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateOnly>("Day").HasColumnType("date");
+                b.Property<DateTime?>("RotatedAt").HasColumnType("timestamp with time zone");
+                b.HasKey("Id");
+                b.HasIndex("Day").IsUnique();
+                b.ToTable("DayPasscodes");
             });
 
             modelBuilder.Entity("Backend.Models.User", b =>

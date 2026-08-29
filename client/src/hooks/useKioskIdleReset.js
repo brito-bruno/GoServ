@@ -11,7 +11,7 @@ export function useKioskIdleReset(homePath = '/') {
   const location = useLocation()
 
   React.useEffect(() => {
-    if (!kiosk) return
+    if (!kiosk || !homePath) return
     if (location.pathname.includes('/pedido/')) return
 
     let timer

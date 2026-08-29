@@ -28,6 +28,8 @@ namespace Backend.Services
 
         private static readonly Dictionary<string, string[]> AllowedTransitions = new()
         {
+            [Models.OrderStatuses.AwaitingPayment] =
+                [Models.OrderStatuses.Received, Models.OrderStatuses.Cancelled],
             [Models.OrderStatuses.Received] = [Models.OrderStatuses.Preparing, Models.OrderStatuses.Cancelled],
             [Models.OrderStatuses.Preparing] = [Models.OrderStatuses.Ready, Models.OrderStatuses.Cancelled],
             [Models.OrderStatuses.Ready] = [Models.OrderStatuses.Delivered],

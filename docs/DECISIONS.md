@@ -31,10 +31,14 @@ O cliente pode enviar `clientUnitPrice`, mas o total usa só preços do banco (R
 - `Order.Id` (int) — número da fila na cozinha  
 - `Order.PublicId` (GUID) — URL do cliente (`/pedido/{uuid}`), não enumerável  
 
-## Pix fora do MVP atual
+## Pix no fluxo do cliente (wireframe T4)
 
-Aula 7 (Mercado Pago) foi adiada de propósito. Pedidos seguem direto para a cozinha após a confirmação no client.
+Pedidos nascem em `AwaitingPayment` e **só entram na cozinha** após
+`POST /api/orders/public/{uuid}/confirm-payment` (simula webhook do provedor).
+A tela do client mostra QR/código e estado “Aguardando confirmação”.
+Integração real Mercado Pago continua opcional para a aula 7.
 
 ## Relatórios
 
-Agregações diárias em UTC sobre pedidos não cancelados (vendas + ticket médio + top itens). Fuso do estabelecimento pode ser parametrizado depois.
+Agregações diárias em UTC sobre pedidos **já pagos** (exclui `AwaitingPayment` e cancelados).
+Fuso do estabelecimento pode ser parametrizado depois.

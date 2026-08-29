@@ -1,13 +1,6 @@
 import React from 'react'
 import { api } from '../services/api'
-
-const STATUS_LABEL = {
-  Received: 'Recebido',
-  Preparing: 'Em preparo',
-  Ready: 'Pronto',
-  Delivered: 'Entregue',
-  Cancelled: 'Cancelado',
-}
+import { useContentLoading } from '../components/ui'
 
 function formatPrice(value) {
   return Number(value).toLocaleString('pt-BR', {
@@ -24,191 +17,170 @@ function todayInputValue() {
   return `${yyyy}-${mm}-${dd}`
 }
 
+function formatDayLabel(isoDate) {
+  const [y, m, d] = isoDate.split('-')
+  return `HOJE · ${d}/${m}/${y}`
+}
+
 export default function ReportsPage() {
-  const [date, setDate] = React.useState(todayInputValue)
+  const date = todayInputValue()
   const [report, setReport] = React.useState(null)
   const [error, setError] = React.useState('')
   const [loading, setLoading] = React.useState(true)
-
-  const load = React.useCallback(async (day) => {
-    setLoading(true)
-    setError('')
-    try {
-      setReport(await api.getDailyReport(day))
-    } catch (e) {
-      setError(e.message)
-      setReport(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  useContentLoading(loading)
 
   React.useEffect(() => {
-    load(date)
-  }, [date, load])
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError('')
+      try {
+        const data = await api.getDailyReport(date)
+        if (!cancelled) setReport(data)
+      } catch (e) {
+        if (!cancelled) {
+          setError(e.message)
+          setReport(null)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [date])
+
+  const maxQty = report?.topItems?.length
+    ? Math.max(...report.topItems.map((i) => i.quantitySold), 1)
+    : 1
 
   return (
     <section className="page">
-      <header className="head">
-        <div>
-          <h1>Relatórios</h1>
-          <p>Vendas do dia, ticket médio e itens mais pedidos.</p>
-        </div>
-        <label>
-          Data
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
+      <header className="bar">
+        <h1>Relatórios</h1>
+        <span className="day">{formatDayLabel(date)}</span>
       </header>
 
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Carregando…</p>}
 
       {!loading && report && (
         <>
-          <div className="metrics">
-            <article>
-              <span>Pedidos</span>
-              <strong>{report.ordersCount}</strong>
-            </article>
-            <article>
-              <span>Vendas</span>
-              <strong>{formatPrice(report.totalSales)}</strong>
-            </article>
-            <article>
-              <span>Ticket médio</span>
-              <strong>{formatPrice(report.averageTicket)}</strong>
-            </article>
+          <div className="kpi">
+            <div>
+              <div className="k">Vendas do dia</div>
+              <div className="n">{formatPrice(report.totalSales)}</div>
+            </div>
+            <div>
+              <div className="k">Pedidos</div>
+              <div className="n">{report.ordersCount}</div>
+            </div>
+            <div>
+              <div className="k">Ticket médio</div>
+              <div className="n">{formatPrice(report.averageTicket)}</div>
+            </div>
           </div>
 
-          <div className="grid">
-            <div className="panel">
-              <h2>Mais vendidos</h2>
-              {report.topItems.length === 0 ? (
-                <p className="muted">Sem vendas neste dia.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Qtd</th>
-                      <th>Receita</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.topItems.map((item) => (
-                      <tr key={item.menuItemId}>
-                        <td>{item.name}</td>
-                        <td>{item.quantitySold}</td>
-                        <td>{formatPrice(item.revenue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            <div className="panel">
-              <h2>Por status</h2>
-              {report.byStatus.length === 0 ? (
-                <p className="muted">Nenhum pedido neste dia.</p>
-              ) : (
-                <ul className="status-list">
-                  {report.byStatus.map((row) => (
-                    <li key={row.status}>
-                      <span>{STATUS_LABEL[row.status] || row.status}</span>
-                      <strong>{row.count}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          <p className="section-label">Itens mais vendidos</p>
+          <div className="chart">
+            {report.topItems.length === 0 ? (
+              <p className="muted">Sem vendas neste dia.</p>
+            ) : (
+              report.topItems.slice(0, 6).map((item) => (
+                <div key={item.menuItemId} className="bar-col" title={item.name}>
+                  <i style={{ height: `${(item.quantitySold / maxQty) * 100}%` }} />
+                  <span>{item.quantitySold}</span>
+                </div>
+              ))
+            )}
           </div>
         </>
       )}
 
       <style>{`
-        .head {
+        .bar {
           display: flex;
           justify-content: space-between;
+          align-items: baseline;
           gap: 1rem;
-          align-items: end;
-          margin-bottom: 1.25rem;
-          flex-wrap: wrap;
+          margin-bottom: 1rem;
+          padding-bottom: 0.65rem;
+          border-bottom: 1px solid var(--line);
         }
-        h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
-        .head p { margin: 0; color: var(--muted); }
-        label {
+        h1 { margin: 0; font-size: 1.25rem; }
+        .day {
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          color: var(--muted);
+          letter-spacing: 0.05em;
+        }
+        .kpi {
           display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-          font-size: 0.85rem;
-          font-weight: 500;
-        }
-        input[type="date"] {
-          border: 1px solid var(--line);
-          border-radius: 8px;
-          padding: 0.5rem 0.65rem;
-          background: #fff;
-        }
-        .error { color: var(--danger); }
-        .muted { color: var(--muted); }
-        .metrics {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(140px, 1fr));
           gap: 0.75rem;
           margin-bottom: 1rem;
         }
-        .metrics article {
-          background: var(--panel);
+        .kpi > div {
+          flex: 1;
           border: 1px solid var(--line);
-          border-radius: var(--radius);
-          padding: 1rem;
+          border-radius: 2px;
+          padding: 0.85rem;
+          background: var(--panel);
+        }
+        .k {
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          color: var(--muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        .n {
+          font-size: 1.45rem;
+          font-weight: 700;
+          margin-top: 0.35rem;
+        }
+        .section-label {
+          font-family: var(--mono);
+          font-size: 0.7rem;
+          color: var(--muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          margin: 0 0 0.5rem;
+        }
+        .chart {
+          border: 1px solid var(--line);
+          height: 140px;
+          display: flex;
+          align-items: flex-end;
+          gap: 0.55rem;
+          padding: 0.85rem;
+          background: var(--panel);
+        }
+        .bar-col {
+          flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
+          align-items: center;
+          gap: 0.25rem;
+          height: 100%;
+          justify-content: flex-end;
         }
-        .metrics span { color: var(--muted); font-size: 0.85rem; }
-        .metrics strong { font-size: 1.35rem; letter-spacing: -0.02em; }
-        .grid {
-          display: grid;
-          grid-template-columns: 1.4fr 1fr;
-          gap: 0.85rem;
-        }
-        .panel {
-          background: var(--panel);
+        .bar-col i {
+          display: block;
+          width: 100%;
+          min-height: 4px;
+          background: var(--bg);
           border: 1px solid var(--line);
-          border-radius: var(--radius);
-          padding: 1rem 1.1rem;
         }
-        .panel h2 { margin: 0 0 0.85rem; font-size: 1rem; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td {
-          text-align: left;
-          padding: 0.5rem 0.25rem;
-          border-bottom: 1px solid var(--line);
-          font-size: 0.9rem;
+        .bar-col span {
+          font-family: var(--mono);
+          font-size: 0.7rem;
+          color: var(--muted);
         }
-        th { color: var(--muted); font-weight: 500; }
-        .status-list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: grid;
-          gap: 0.5rem;
-        }
-        .status-list li {
-          display: flex;
-          justify-content: space-between;
-          padding: 0.45rem 0;
-          border-bottom: 1px solid var(--line);
-          font-size: 0.92rem;
-        }
-        @media (max-width: 800px) {
-          .metrics, .grid { grid-template-columns: 1fr; }
+        .error { color: var(--danger); }
+        .muted { color: var(--muted); }
+        @media (max-width: 640px) {
+          .kpi { flex-direction: column; }
         }
       `}</style>
     </section>

@@ -41,6 +41,8 @@ public class OrderRulesTests
     }
 
     [Theory]
+    [InlineData(OrderStatuses.AwaitingPayment, OrderStatuses.Received, true)]
+    [InlineData(OrderStatuses.AwaitingPayment, OrderStatuses.Preparing, false)]
     [InlineData(OrderStatuses.Received, OrderStatuses.Preparing, true)]
     [InlineData(OrderStatuses.Preparing, OrderStatuses.Ready, true)]
     [InlineData(OrderStatuses.Ready, OrderStatuses.Delivered, true)]

@@ -59,6 +59,9 @@ namespace Backend.Dtos
         public string? CustomerNotes { get; set; }
         public decimal Total { get; set; }
         public DateTime CreatedAt { get; set; }
+        /// <summary>Código Pix copia-e-cola (simulado até Mercado Pago).</summary>
+        public string? PixCopyPaste { get; set; }
+        public DateTime? PaymentExpiresAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = [];
     }
 

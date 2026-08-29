@@ -9,6 +9,10 @@ import {
 } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import {
+  PageLoading,
+  ContentLoadingProvider,
+} from './components/ui'
 import ProductsPage from './pages/ProductsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import HomePage from './pages/HomePage'
@@ -16,29 +20,57 @@ import LoginPage from './pages/LoginPage'
 import TablesPage from './pages/TablesPage'
 import KitchenPage from './pages/KitchenPage'
 import ReportsPage from './pages/ReportsPage'
+import QrCodesPage from './pages/QrCodesPage'
+import PromotionsPage from './pages/PromotionsPage'
 
 function Shell() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const isAdmin = user?.role === 'Admin'
   const wide = location.pathname.includes('cozinha')
+  const [navOpen, setNavOpen] = React.useState(false)
+  const [navLoading, setNavLoading] = React.useState(false)
+  const [pageLoading, setPageLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    setNavOpen(false)
+  }, [location.pathname])
+
+  React.useEffect(() => {
+    setNavLoading(true)
+    const t = setTimeout(() => setNavLoading(false), 420)
+    return () => clearTimeout(t)
+  }, [location.pathname])
+
+  const loading = navLoading || pageLoading
 
   return (
-    <div className="shell">
+    <div className={`shell ${navOpen ? 'nav-open' : ''}`}>
+      <button
+        type="button"
+        className="nav-toggle"
+        aria-label="Menu"
+        onClick={() => setNavOpen((v) => !v)}
+      >
+        {navOpen ? 'Fechar' : 'Menu'}
+      </button>
+
       <aside className="sidebar">
         <div className="brand">
           <span className="logo">GoServ</span>
           <span className="badge">{user?.role === 'Kitchen' ? 'Cozinha' : 'Admin'}</span>
         </div>
         <nav>
+          {isAdmin && <NavLink to="/produtos">Produtos</NavLink>}
+          {isAdmin && <NavLink to="/promocoes">Promoções</NavLink>}
+          {isAdmin && <NavLink to="/categorias">Categorias</NavLink>}
+          <NavLink to="/mesas">Mesas</NavLink>
+          <NavLink to="/qrcodes">QR Codes</NavLink>
+          {isAdmin && <NavLink to="/relatorios">Relatórios</NavLink>}
+          <NavLink to="/cozinha">Cozinha</NavLink>
           <NavLink to="/" end>
             Início
           </NavLink>
-          <NavLink to="/cozinha">Cozinha</NavLink>
-          {isAdmin && <NavLink to="/produtos">Produtos</NavLink>}
-          {isAdmin && <NavLink to="/categorias">Categorias</NavLink>}
-          {isAdmin && <NavLink to="/relatorios">Relatórios</NavLink>}
-          <NavLink to="/mesas">Mesas</NavLink>
         </nav>
         <div className="user-box">
           <strong>{user?.name}</strong>
@@ -49,51 +81,72 @@ function Shell() {
         </div>
       </aside>
 
-      <main className={wide ? 'content wide' : 'content'}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route
-            path="/cozinha"
-            element={
-              <ProtectedRoute roles={['Admin', 'Kitchen']}>
-                <KitchenPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/produtos"
-            element={
-              <ProtectedRoute roles={['Admin']}>
-                <ProductsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/categorias"
-            element={
-              <ProtectedRoute roles={['Admin']}>
-                <CategoriesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/relatorios"
-            element={
-              <ProtectedRoute roles={['Admin']}>
-                <ReportsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/mesas"
-            element={
-              <ProtectedRoute roles={['Admin', 'Kitchen']}>
-                <TablesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+      <main className={`main-pane ${wide ? 'wide' : ''}`}>
+        <PageLoading active={loading} />
+        <div className={wide ? 'content wide' : 'content'}>
+          <ContentLoadingProvider setPageLoading={setPageLoading}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route
+                path="/cozinha"
+                element={
+                  <ProtectedRoute roles={['Admin', 'Kitchen']}>
+                    <KitchenPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/produtos"
+                element={
+                  <ProtectedRoute roles={['Admin']}>
+                    <ProductsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/promocoes"
+                element={
+                  <ProtectedRoute roles={['Admin']}>
+                    <PromotionsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/categorias"
+                element={
+                  <ProtectedRoute roles={['Admin']}>
+                    <CategoriesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/relatorios"
+                element={
+                  <ProtectedRoute roles={['Admin']}>
+                    <ReportsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mesas"
+                element={
+                  <ProtectedRoute roles={['Admin', 'Kitchen']}>
+                    <TablesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/qrcodes"
+                element={
+                  <ProtectedRoute roles={['Admin', 'Kitchen']}>
+                    <QrCodesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ContentLoadingProvider>
+        </div>
       </main>
 
       <style>{`
@@ -101,6 +154,20 @@ function Shell() {
           display: grid;
           grid-template-columns: 220px 1fr;
           min-height: 100vh;
+        }
+        .nav-toggle {
+          display: none;
+          position: sticky;
+          top: 0;
+          z-index: 30;
+          width: 100%;
+          border: none;
+          border-bottom: 1px solid var(--line);
+          background: var(--panel);
+          padding: 0.75rem 1rem;
+          font-weight: 700;
+          text-align: left;
+          cursor: pointer;
         }
         .sidebar {
           padding: 1.5rem 1.1rem;
@@ -151,32 +218,56 @@ function Shell() {
           flex-direction: column;
           gap: 0.2rem;
           font-size: 0.85rem;
+          color: var(--ink);
         }
+        .user-box strong { color: var(--ink); }
         .user-box span { color: var(--muted); }
-        .logout {
+        .sidebar .logout,
+        button.logout {
           margin-top: 0.5rem;
           align-self: flex-start;
-          border: 1px solid var(--line);
-          background: transparent;
-          padding: 0.35rem 0.65rem;
+          border: 1px solid var(--line) !important;
+          background: #fff !important;
+          color: var(--ink) !important;
+          padding: 0.4rem 0.75rem;
           border-radius: 6px;
           cursor: pointer;
-          font-weight: 500;
+          font-weight: 600;
+          font-size: 0.85rem;
+        }
+        .sidebar .logout:hover {
+          background: var(--bg) !important;
+        }
+        .main-pane {
+          position: relative;
+          min-height: 100vh;
+          min-width: 0;
+          background: var(--bg);
         }
         .content {
           padding: 1.75rem 1.5rem 3rem;
           max-width: 960px;
         }
-        .content.wide {
+        .content.wide,
+        .main-pane.wide .content {
           max-width: 1200px;
         }
         @media (max-width: 760px) {
           .shell { grid-template-columns: 1fr; }
+          .nav-toggle { display: block; }
           .sidebar {
+            display: none;
             border-right: none;
             border-bottom: 1px solid var(--line);
+            padding-top: 0.75rem;
           }
+          .shell.nav-open .sidebar { display: flex; }
           nav { flex-direction: row; flex-wrap: wrap; }
+          .main-pane { min-height: calc(100vh - 48px); }
+          .content {
+            padding: 1rem 1rem 2.5rem;
+            max-width: none;
+          }
         }
       `}</style>
     </div>

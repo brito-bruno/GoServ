@@ -3,22 +3,24 @@ export default function HomePage() {
     <section>
       <h1>Painel do estabelecimento</h1>
       <p>
-        Cadastre o cardápio, abra sessões de mesa, acompanhe a cozinha e veja o
-        desempenho do dia. O cliente acessa pelo link/QR gerado em Mesas.
+        Cadastre o cardápio, gerencie mesas e QR codes, acompanhe a cozinha e
+        veja o desempenho do dia.
       </p>
       <ul>
+        <li>
+          <strong>QR Codes</strong> — cardápio (consulta) e mesas; senha do dia
+        </li>
         <li>
           <strong>Cozinha</strong> — pedidos ao vivo (SignalR), avanço de status
         </li>
         <li>
-          <strong>Produtos / Categorias</strong> — gestão do cardápio (perfil Admin)
+          <strong>Produtos / Categorias</strong> — gestão do cardápio (Admin)
         </li>
         <li>
           <strong>Relatórios</strong> — vendas, ticket médio e mais vendidos
         </li>
         <li>
-          <strong>Mesas</strong> — sessão com token; kiosk no client com{' '}
-          <code>?kiosk=1</code>
+          <strong>Mesas</strong> — cadastro; entrada do cliente via QR + senha
         </li>
       </ul>
 
@@ -38,13 +40,6 @@ export default function HomePage() {
         }
         li { margin-bottom: 0.5rem; }
         strong { color: var(--ink); }
-        code {
-          font-family: var(--mono);
-          font-size: 0.85em;
-          background: var(--bg);
-          padding: 0.1rem 0.35rem;
-          border-radius: 4px;
-        }
       `}</style>
     </section>
   )

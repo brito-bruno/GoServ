@@ -1,30 +1,31 @@
 # Snapshot do banco (versionado)
 
-O arquivo `snapshot.sql` (gerado por `npm run db:export`) contém **schema + dados**,
-incluindo fotos JPEG convertidas gravadas em `MenuItems.PhotoData`.
+O arquivo `snapshot.sql` (gerado por `npm run db:export` ou `npm run db:reset`) contém
+**schema + dados**, incluindo fotos e promoções.
 
 ## Fluxo do time
 
-1. Suba o projeto, cadastre produtos/fotos no admin.
-2. Exporte e versione:
+1. Após mudanças relevantes no banco (seed, migrações, cadastros, fotos):
 
 ```powershell
 npm run db:export
 git add backend/db/snapshot.sql
-git commit -m "Atualiza snapshot do banco com cardapio e fotos"
+git commit -m "Atualiza snapshot do banco"
 ```
 
-3. Outro integrante / PC da faculdade:
+2. Para **zerar** e versionar uma base limpa (só usuários admin/cozinha):
 
 ```powershell
-npm run setup    # sobe Docker e restaura o snapshot se existir
+npm run db:reset
+git add backend/db/snapshot.sql
+git commit -m "Reseta snapshot do banco"
+```
+
+3. Outro integrante:
+
+```powershell
+npm run setup    # sobe Docker e restaura o snapshot
 npm run dev
 ```
 
-Ou só:
-
-```powershell
-npm run db:restore
-```
-
-Sem snapshot, a API usa migrations + seed automático (sem fotos binárias).
+Sem snapshot, a API aplica migrations + seed mínimo (usuários).

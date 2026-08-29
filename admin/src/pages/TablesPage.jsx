@@ -1,5 +1,7 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../services/api'
+import { useContentLoading } from '../components/ui'
 
 export default function TablesPage() {
   const [tables, setTables] = React.useState([])
@@ -7,6 +9,8 @@ export default function TablesPage() {
   const [error, setError] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [lastLink, setLastLink] = React.useState('')
+  const [booting, setBooting] = React.useState(true)
+  useContentLoading(booting)
 
   const load = React.useCallback(async () => {
     try {
@@ -14,6 +18,8 @@ export default function TablesPage() {
       setTables(await api.getTables())
     } catch (e) {
       setError(e.message)
+    } finally {
+      setBooting(false)
     }
   }, [])
 
@@ -95,7 +101,10 @@ export default function TablesPage() {
     <section className="page">
       <header>
         <h1>Mesas</h1>
-        <p>Abra uma sessão para gerar o link/QR do cardápio da mesa.</p>
+        <p>
+          Cadastre mesas aqui. Os QR codes fixos ficam em{' '}
+          <Link to="/qrcodes">QR Codes</Link> (entrada com nome + senha do dia).
+        </p>
       </header>
 
       {error && <p className="error">{error}</p>}
@@ -223,7 +232,7 @@ export default function TablesPage() {
           background: #fff;
           max-width: 280px;
         }
-        button {
+        .page button {
           border: none;
           background: var(--accent);
           color: #fff;
@@ -232,8 +241,8 @@ export default function TablesPage() {
           font-weight: 600;
           cursor: pointer;
         }
-        button:disabled { opacity: 0.6; }
-        button.ghost {
+        .page button:disabled { opacity: 0.6; }
+        .page button.ghost {
           background: transparent;
           color: var(--ink);
           border: 1px solid var(--line);

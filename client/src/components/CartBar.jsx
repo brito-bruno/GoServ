@@ -16,12 +16,17 @@ export default function CartBar({ tableToken }) {
 
   return (
     <div className="cart-bar">
-      <Link to={cartPath} className="cart-cta">
-        <span>
-          Ver pedido · {itemCount} {itemCount === 1 ? 'item' : 'itens'}
-        </span>
-        <strong>{formatPrice(estimateTotal)}</strong>
-      </Link>
+      <div className="inner">
+        <div>
+          <div className="c">
+            {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+          </div>
+          <div className="v">{formatPrice(estimateTotal)}</div>
+        </div>
+        <Link to={cartPath} className="btn">
+          Ver pedido
+        </Link>
+      </div>
 
       <style>{`
         .cart-bar {
@@ -29,23 +34,32 @@ export default function CartBar({ tableToken }) {
           left: 0;
           right: 0;
           bottom: 0;
-          padding: 0.85rem 1rem 1.1rem;
-          background: linear-gradient(transparent, rgba(26,21,16,0.92) 30%);
+          border-top: 1px solid var(--border);
+          background: var(--bg-elevated);
           z-index: 30;
+          padding: 0.7rem 1rem 0.9rem;
         }
-        .cart-cta {
+        .inner {
+          max-width: 720px;
+          margin: 0 auto;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          max-width: 720px;
-          margin: 0 auto;
-          background: var(--accent);
-          color: #1a1510;
+          gap: 0.75rem;
+        }
+        .c { font-size: 0.75rem; color: var(--muted); }
+        .v { font-size: 1rem; font-weight: 700; }
+        .btn {
+          flex: 1;
+          max-width: 200px;
+          text-align: center;
           text-decoration: none;
-          font-weight: 600;
-          padding: 0.9rem 1.1rem;
-          border-radius: 14px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+          background: var(--text);
+          color: var(--bg);
+          font-weight: 700;
+          font-size: 0.9rem;
+          padding: 0.7rem 0.9rem;
+          border-radius: 4px;
         }
       `}</style>
     </div>

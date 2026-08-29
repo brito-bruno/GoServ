@@ -8,7 +8,7 @@ function formatPrice(value) {
   })
 }
 
-export default function CustomizeModal({ item, onClose, onConfirm }) {
+export default function CustomizeModal({ item, tableLabel, onClose, onConfirm }) {
   const [addons, setAddons] = React.useState([])
   const [selected, setSelected] = React.useState({})
   const [quantity, setQuantity] = React.useState(1)
@@ -58,11 +58,32 @@ export default function CustomizeModal({ item, onClose, onConfirm }) {
     <div className="overlay" role="dialog" aria-modal="true">
       <div className="sheet">
         <header>
-          <h2>{item.name}</h2>
-          <button type="button" className="icon" onClick={onClose} aria-label="Fechar">
-            ×
+          <button type="button" className="back" onClick={onClose}>
+            ← Voltar
           </button>
+          {tableLabel && <span className="mesa">{tableLabel}</span>}
         </header>
+
+        {item.photoUrl ? (
+          <div className="hero">
+            <img src={item.photoUrl} alt="" />
+          </div>
+        ) : (
+          <div className="hero placeholder">FOTO DO PRATO</div>
+        )}
+
+        <div className="title-row">
+          <h2>{item.name}</h2>
+          {item.isOnPromo ? (
+            <div className="price-stack">
+              <s>{formatPrice(item.originalPrice)}</s>
+              <strong className="promo">{formatPrice(item.price)}</strong>
+            </div>
+          ) : (
+            <strong>{formatPrice(item.price)}</strong>
+          )}
+        </div>
+        {item.description && <p className="desc">{item.description}</p>}
 
         {loading && <p className="muted">Carregando opções…</p>}
         {error && <p className="err">{error}</p>}
@@ -72,14 +93,14 @@ export default function CustomizeModal({ item, onClose, onConfirm }) {
             <legend>Adicionais</legend>
             {addons.map((addon) => (
               <label key={addon.id} className="check">
-                <input
-                  type="checkbox"
-                  checked={Boolean(selected[addon.id])}
-                  onChange={() => toggleAddon(addon.id)}
-                />
                 <span>{addon.name}</span>
-                <span className="price">
-                  {Number(addon.price) === 0 ? 'grátis' : `+ ${formatPrice(addon.price)}`}
+                <span className="right">
+                  + {formatPrice(addon.price)}&nbsp;
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selected[addon.id])}
+                    onChange={() => toggleAddon(addon.id)}
+                  />
                 </span>
               </label>
             ))}
@@ -90,25 +111,26 @@ export default function CustomizeModal({ item, onClose, onConfirm }) {
           Observação
           <textarea
             rows={2}
-            placeholder='Ex.: sem cebola, ponto da carne…'
+            placeholder="Ex.: sem cebola"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
         </label>
 
-        <div className="qty">
-          <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-            −
-          </button>
-          <span>{quantity}</span>
-          <button type="button" onClick={() => setQuantity((q) => q + 1)}>
-            +
+        <div className="footer-row">
+          <div className="qty">
+            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+              −
+            </button>
+            <span>{quantity}</span>
+            <button type="button" onClick={() => setQuantity((q) => q + 1)}>
+              +
+            </button>
+          </div>
+          <button type="button" className="primary" onClick={handleConfirm}>
+            Adicionar · {formatPrice(estimate)}
           </button>
         </div>
-
-        <button type="button" className="primary" onClick={handleConfirm}>
-          Adicionar · {formatPrice(estimate)}
-        </button>
       </div>
 
       <style>{`
@@ -119,107 +141,155 @@ export default function CustomizeModal({ item, onClose, onConfirm }) {
           display: grid;
           align-items: end;
           z-index: 40;
-          animation: fade 0.2s ease;
         }
-        @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
         .sheet {
           background: var(--bg-elevated);
-          border-radius: 18px 18px 0 0;
-          padding: 1.1rem 1.2rem 1.4rem;
-          max-height: 85vh;
+          border-radius: 12px 12px 0 0;
+          padding: 0.85rem 1rem 1.25rem;
+          max-height: 90vh;
           overflow: auto;
-          animation: up 0.25s ease;
-        }
-        @keyframes up {
-          from { transform: translateY(24px) }
-          to { transform: translateY(0) }
         }
         header {
           display: flex;
           justify-content: space-between;
-          align-items: start;
-          gap: 1rem;
-          margin-bottom: 0.85rem;
+          align-items: center;
+          margin-bottom: 0.65rem;
         }
-        header h2 { margin: 0; font-size: 1.2rem; }
-        .icon {
+        .back {
           border: none;
           background: transparent;
-          color: var(--muted);
-          font-size: 1.6rem;
-          line-height: 1;
+          color: var(--text);
+          font-weight: 600;
           cursor: pointer;
+          padding: 0;
         }
-        fieldset {
+        .mesa {
+          font-family: var(--mono, ui-monospace, monospace);
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          color: var(--muted);
+        }
+        .hero {
+          height: 104px;
           border: 1px solid var(--border);
-          border-radius: 12px;
-          margin: 0 0 0.9rem;
-          padding: 0.65rem 0.75rem;
-        }
-        legend { padding: 0 0.35rem; color: var(--muted); font-size: 0.8rem; }
-        .check {
+          overflow: hidden;
+          margin-bottom: 0.75rem;
           display: grid;
-          grid-template-columns: auto 1fr auto;
-          gap: 0.55rem;
-          align-items: center;
-          padding: 0.4rem 0;
-          font-size: 0.95rem;
+          place-items: center;
+          font-size: 0.7rem;
+          color: var(--muted);
+          font-family: var(--mono, ui-monospace, monospace);
         }
-        .check .price { color: var(--accent); font-size: 0.85rem; }
+        .hero img { width: 100%; height: 100%; object-fit: cover; }
+        .hero.placeholder {
+          background: repeating-linear-gradient(
+            45deg, var(--border), var(--border) 5px, transparent 5px, transparent 10px
+          );
+        }
+        .title-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          align-items: baseline;
+        }
+        .title-row h2 { margin: 0; font-size: 1.05rem; }
+        .price-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.1rem;
+        }
+        .price-stack s {
+          font-size: 0.75rem;
+          color: var(--muted);
+        }
+        .price-stack .promo {
+          color: #3ecf7a;
+          font-size: 1.05rem;
+        }
+        .desc {
+          margin: 0.35rem 0 0;
+          font-size: 0.8rem;
+          color: var(--muted);
+          line-height: 1.45;
+        }
+        fieldset { border: none; margin: 1rem 0 0; padding: 0; }
+        legend {
+          font-family: var(--mono, ui-monospace, monospace);
+          font-size: 0.7rem;
+          color: var(--muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          margin-bottom: 0.4rem;
+        }
+        .check {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          font-size: 0.88rem;
+          padding: 0.35rem 0;
+        }
+        .right {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          color: var(--muted);
+          white-space: nowrap;
+        }
         .block {
           display: flex;
           flex-direction: column;
           gap: 0.35rem;
-          font-size: 0.85rem;
-          margin-bottom: 0.9rem;
+          margin-top: 0.85rem;
+          font-family: var(--mono, ui-monospace, monospace);
+          font-size: 0.7rem;
+          color: var(--muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
         }
         textarea {
           border: 1px solid var(--border);
-          border-radius: 10px;
-          background: var(--bg);
+          border-radius: 2px;
+          padding: 0.55rem;
+          font-family: inherit;
+          font-size: 0.88rem;
+          text-transform: none;
+          letter-spacing: normal;
           color: var(--text);
-          padding: 0.6rem 0.7rem;
-          resize: vertical;
+          background: var(--bg);
+        }
+        .footer-row {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          margin-top: 1rem;
         }
         .qty {
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 0.9rem;
-          background: var(--bg);
-          border-radius: 999px;
-          padding: 0.25rem;
+          gap: 0.45rem;
         }
         .qty button {
-          width: 36px;
-          height: 36px;
-          border: none;
-          border-radius: 50%;
-          background: var(--surface);
+          width: 28px;
+          height: 28px;
+          border: 1px solid var(--border);
+          background: transparent;
+          border-radius: 2px;
           color: var(--text);
-          font-size: 1.1rem;
           cursor: pointer;
         }
-        .qty span { min-width: 1.5rem; text-align: center; font-weight: 600; }
         .primary {
-          width: 100%;
+          flex: 1;
           border: none;
-          background: var(--accent);
-          color: #1a1510;
+          background: var(--text);
+          color: var(--bg);
           font-weight: 700;
-          padding: 0.85rem 1rem;
-          border-radius: 12px;
+          padding: 0.7rem 0.85rem;
+          border-radius: 4px;
           cursor: pointer;
         }
-        .muted { color: var(--muted); }
+        .muted { color: var(--muted); font-size: 0.85rem; }
         .err { color: var(--danger); }
-        @media (min-width: 640px) {
-          .overlay { align-items: center; justify-items: center; }
-          .sheet {
-            width: min(420px, 92vw);
-            border-radius: 16px;
-          }
-        }
       `}</style>
     </div>
   )

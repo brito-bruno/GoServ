@@ -30,12 +30,17 @@ Use com o stack no ar (`npm run dev`). Marque cada item ao validar.
 - [ ] Alterar quantidade / remover item
 - [ ] Adicionais (se o produto tiver) alteram o total exibido
 - [ ] Nota do item / observação (se existir) aceita texto curto
-- [ ] Checkout cria pedido e redireciona para acompanhamento
+- [ ] Checkout vai para tela de **pagamento Pix** (não direto à cozinha)
+- [ ] “Simular pagamento (demo)” libera o pedido; cozinha só então recebe
+- [ ] Acompanhamento mostra **senha grande** e passos do wireframe
+- [ ] Item esgotado aparece esmaecido com tag ESGOTADO
+- [ ] Mesa visível no topo das telas do cliente
+- [ ] KDS mostra tempo decorrido (“N min”), não só horário
 - [ ] Total do pedido bate com a soma no servidor (não confiar só no front)
 
 ## Acompanhamento
 
-- [ ] Tela `/pedido/{publicId}` mostra status inicial (ex.: Recebido)
+- [ ] Tela `/pedido/{publicId}` mostra senha grande e status (ex.: Recebido)
 - [ ] Ao mudar status na cozinha (admin), client atualiza (SignalR ou refresh)
 - [ ] Banner/indicação quando status = Pronto
 

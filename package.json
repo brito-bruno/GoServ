@@ -13,6 +13,7 @@
     "db:logs": "docker compose logs -f db",
     "db:export": "powershell -ExecutionPolicy Bypass -File ./scripts/db-export.ps1",
     "db:restore": "powershell -ExecutionPolicy Bypass -File ./scripts/db-restore.ps1",
+    "db:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/db-reset.ps1",
     "backend": "dotnet run --project ./backend --launch-profile http",
     "test": "dotnet test ./tests/Backend.Tests/Backend.Tests.csproj",
     "lint": "npm run lint --prefix client && npm run lint --prefix admin",

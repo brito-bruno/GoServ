@@ -1,5 +1,6 @@
 import React from 'react'
 import { api } from '../services/api'
+import { Checkbox, Select, ImageUpload, useContentLoading } from '../components/ui'
 
 const emptyForm = {
   name: '',
@@ -18,6 +19,8 @@ export default function ProductsPage() {
   const [editingId, setEditingId] = React.useState(null)
   const [error, setError] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const [booting, setBooting] = React.useState(true)
+  useContentLoading(booting)
 
   const load = React.useCallback(async () => {
     try {
@@ -30,6 +33,8 @@ export default function ProductsPage() {
       setCategories(cats)
     } catch (e) {
       setError(e.message)
+    } finally {
+      setBooting(false)
     }
   }, [])
 
@@ -42,8 +47,8 @@ export default function ProductsPage() {
     setForm({
       name: item.name,
       description: item.description || '',
-      price: String(item.price),
-      categoryId: item.categoryId ?? '',
+      price: String(item.originalPrice ?? item.price),
+      categoryId: item.categoryId == null ? '' : String(item.categoryId),
       available: item.available,
     })
     setPhotoFile(null)
@@ -55,16 +60,6 @@ export default function ProductsPage() {
     setForm(emptyForm)
     setPhotoFile(null)
     setPhotoPreview('')
-  }
-
-  function onPhotoChange(e) {
-    const file = e.target.files?.[0]
-    if (!file) {
-      setPhotoFile(null)
-      return
-    }
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
   }
 
   function buildPayload() {
@@ -142,7 +137,7 @@ export default function ProductsPage() {
       await api.updateMenuItem(item.id, {
         name: item.name,
         description: item.description,
-        price: item.price,
+        price: item.originalPrice ?? item.price,
         categoryId: item.categoryId,
         available: !item.available,
       })
@@ -154,14 +149,16 @@ export default function ProductsPage() {
     }
   }
 
+  const categoryOptions = categories.map((c) => ({
+    value: String(c.id),
+    label: c.name,
+  }))
+
   return (
     <section className="page">
       <header>
         <h1>Produtos</h1>
-        <p>
-          Cadastre itens do cardápio. Fotos são convertidas para JPEG e salvas no
-          banco.
-        </p>
+        <p>Cadastre itens do cardápio. Fotos vão para o banco em JPEG.</p>
       </header>
 
       {error && <p className="error">{error}</p>}
@@ -169,7 +166,7 @@ export default function ProductsPage() {
       <form className="panel" onSubmit={handleSubmit}>
         <h2>{editingId ? 'Editar produto' : 'Novo produto'}</h2>
         <div className="grid">
-          <label>
+          <label className="field">
             Nome
             <input
               required
@@ -177,7 +174,7 @@ export default function ProductsPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </label>
-          <label>
+          <label className="field">
             Preço (R$)
             <input
               required
@@ -188,30 +185,22 @@ export default function ProductsPage() {
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
           </label>
-          <label>
-            Categoria
-            <select
-              value={form.categoryId}
-              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            >
-              <option value="">Sem categoria</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
+          <Select
+            label="Categoria"
+            value={form.categoryId}
+            placeholder="Sem categoria"
+            options={categoryOptions}
+            onChange={(v) => setForm({ ...form, categoryId: v })}
+          />
+          <div className="check-wrap">
+            <Checkbox
+              label="Disponível no cardápio"
               checked={form.available}
-              onChange={(e) => setForm({ ...form, available: e.target.checked })}
+              onChange={(v) => setForm({ ...form, available: v })}
             />
-            Disponível no cardápio
-          </label>
+          </div>
         </div>
-        <label>
+        <label className="field">
           Descrição
           <textarea
             rows={2}
@@ -219,18 +208,17 @@ export default function ProductsPage() {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </label>
-        <label>
-          Foto (JPEG/PNG/WebP · máx. 5 MB)
-          <input type="file" accept="image/*" onChange={onPhotoChange} />
-        </label>
-        {photoPreview && (
-          <div className="preview-row">
-            <img src={photoPreview} alt="Prévia" />
-            <button type="button" className="ghost" onClick={clearPhoto} disabled={busy}>
-              Remover foto
-            </button>
-          </div>
-        )}
+
+        <ImageUpload
+          previewUrl={photoPreview}
+          onFileChange={(file) => {
+            setPhotoFile(file)
+            setPhotoPreview(file ? URL.createObjectURL(file) : '')
+          }}
+          onClear={clearPhoto}
+          disabled={busy}
+        />
+
         <div className="actions">
           <button type="submit" disabled={busy}>
             {editingId ? 'Salvar' : 'Cadastrar'}
@@ -265,12 +253,17 @@ export default function ProductsPage() {
                     ) : (
                       <span className="ph" />
                     )}
-                    <span>{item.name}</span>
+                    <span>
+                      {item.name}
+                      {item.isOnPromo && (
+                        <span className="promo-tag">-{item.discountPercent}%</span>
+                      )}
+                    </span>
                   </div>
                 </td>
                 <td>{item.categoryName || '—'}</td>
                 <td>
-                  {Number(item.price).toLocaleString('pt-BR', {
+                  {Number(item.originalPrice ?? item.price).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
                   })}
@@ -321,7 +314,7 @@ export default function ProductsPage() {
           gap: 0.75rem;
           margin-bottom: 0.75rem;
         }
-        label {
+        .field {
           display: flex;
           flex-direction: column;
           gap: 0.3rem;
@@ -329,33 +322,20 @@ export default function ProductsPage() {
           font-size: 0.85rem;
           font-weight: 500;
         }
-        label.check {
-          flex-direction: row;
-          align-items: center;
-          align-self: end;
-          margin-bottom: 0;
+        .check-wrap {
+          display: flex;
+          align-items: end;
+          padding-bottom: 0.35rem;
         }
-        input, select, textarea {
+        input, textarea {
           border: 1px solid var(--line);
           border-radius: 8px;
           padding: 0.55rem 0.65rem;
           background: #fff;
+          font: inherit;
         }
-        .preview-row {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 0.85rem;
-        }
-        .preview-row img {
-          width: 88px;
-          height: 88px;
-          object-fit: cover;
-          border-radius: 10px;
-          border: 1px solid var(--line);
-        }
-        .actions { display: flex; gap: 0.5rem; }
-        button {
+        .actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .page button {
           border: none;
           background: var(--accent);
           color: #fff;
@@ -364,27 +344,27 @@ export default function ProductsPage() {
           font-weight: 600;
           cursor: pointer;
         }
-        button:hover { background: var(--accent-hover); }
-        button:disabled { opacity: 0.6; cursor: wait; }
-        button.ghost {
+        .page button:hover { background: var(--accent-hover); }
+        .page button:disabled { opacity: 0.6; cursor: wait; }
+        .page button.ghost {
           background: transparent;
           color: var(--ink);
           border: 1px solid var(--line);
         }
-        button.danger {
+        .page button.danger {
           background: transparent;
           color: var(--danger);
           border: 1px solid transparent;
         }
-        button.status {
+        .page button.status {
           font-size: 0.75rem;
           padding: 0.25rem 0.5rem;
         }
-        button.status.on {
+        .page button.status.on {
           background: rgba(31, 107, 74, 0.12);
           color: var(--accent);
         }
-        button.status.off {
+        .page button.status.off {
           background: rgba(154, 107, 18, 0.12);
           color: var(--warn);
         }
@@ -409,6 +389,16 @@ export default function ProductsPage() {
           border-radius: 8px;
           object-fit: cover;
           background: var(--bg);
+        }
+        .promo-tag {
+          display: inline-block;
+          margin-left: 0.35rem;
+          font-size: 0.65rem;
+          font-weight: 700;
+          color: #1f6b4a;
+          background: rgba(31, 107, 74, 0.12);
+          padding: 0.1rem 0.35rem;
+          border-radius: 999px;
         }
         @media (max-width: 640px) {
           .grid { grid-template-columns: 1fr; }

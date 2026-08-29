@@ -66,4 +66,5 @@ Write-Host "  Client (cardapio): http://localhost:5173"
 Write-Host "  Admin (gestao):    http://localhost:5174"
 Write-Host "  API:               http://localhost:5000"
 Write-Host ""
-Write-Host "Apos popular dados/fotos: npm run db:export  (e commit de backend/db/snapshot.sql)"
+Após popular dados/fotos/promoções: `npm run db:export` e commit de `backend/db/snapshot.sql`.  
+Para zerar tudo (só usuários): `npm run db:reset`.

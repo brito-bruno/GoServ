@@ -31,7 +31,9 @@ namespace Backend.Repositories
                 .ToListAsync();
 
             var salesOrders = dayOrders
-                .Where(o => o.Status != OrderStatuses.Cancelled)
+                .Where(o =>
+                    o.Status != OrderStatuses.Cancelled &&
+                    o.Status != OrderStatuses.AwaitingPayment)
                 .ToList();
 
             var totalSales = salesOrders.Sum(o => o.Total);

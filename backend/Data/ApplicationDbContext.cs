@@ -17,6 +17,8 @@ namespace Backend.Data
         public DbSet<OrderItem> OrderItems { get; set; } = null!;
         public DbSet<OrderItemAddon> OrderItemAddons { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<DayPasscode> DayPasscodes { get; set; } = null!;
+        public DbSet<Promotion> Promotions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +32,17 @@ namespace Backend.Data
                     .WithMany(c => c.MenuItems)
                     .HasForeignKey(m => m.CategoryId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<Promotion>(entity =>
+            {
+                entity.Property(p => p.PromoPrice).HasPrecision(10, 2);
+                entity.HasOne(p => p.MenuItem)
+                    .WithMany()
+                    .HasForeignKey(p => p.MenuItemId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(p => p.MenuItemId);
+                entity.HasIndex(p => p.EndsAt);
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -48,11 +61,18 @@ namespace Backend.Data
             {
                 entity.HasIndex(s => s.AccessToken).IsUnique();
                 entity.Property(s => s.AccessToken).HasMaxLength(80);
+                entity.Property(s => s.GuestName).HasMaxLength(80);
                 entity.Property(s => s.SpendingCap).HasPrecision(10, 2);
                 entity.HasOne(s => s.DiningTable)
                     .WithMany(t => t.Sessions)
                     .HasForeignKey(s => s.DiningTableId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DayPasscode>(entity =>
+            {
+                entity.HasIndex(d => d.Day).IsUnique();
+                entity.Property(d => d.Code).HasMaxLength(20);
             });
 
             modelBuilder.Entity<Addon>(entity =>

@@ -37,6 +37,29 @@ namespace Backend.Controllers
             }
         }
 
+        [HttpGet("{id:int}/public")]
+        [AllowAnonymous]
+        public async Task<ActionResult<PublicTableDto>> GetPublic(int id)
+        {
+            var table = await _service.GetPublicTableAsync(id);
+            return table is null ? NotFound(new { message = "Mesa não encontrada." }) : Ok(table);
+        }
+
+        [HttpPost("{id:int}/join")]
+        [AllowAnonymous]
+        public async Task<ActionResult<TableSessionDto>> Join(int id, JoinTableDto dto)
+        {
+            try
+            {
+                var session = await _service.JoinTableAsync(id, dto);
+                return Ok(session);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("{id:int}/sessions")]
         [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Kitchen}")]
         public async Task<ActionResult<TableSessionDto>> OpenSession(int id, OpenTableSessionDto? dto)

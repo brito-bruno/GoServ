@@ -1,5 +1,6 @@
 import React from 'react'
 import { api } from '../services/api'
+import { useContentLoading } from '../components/ui'
 
 const emptyForm = { name: '', sortOrder: 0 }
 
@@ -9,6 +10,8 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = React.useState(null)
   const [error, setError] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const [booting, setBooting] = React.useState(true)
+  useContentLoading(booting)
 
   const load = React.useCallback(async () => {
     try {
@@ -16,6 +19,8 @@ export default function CategoriesPage() {
       setItems(await api.getCategories())
     } catch (e) {
       setError(e.message)
+    } finally {
+      setBooting(false)
     }
   }, [])
 
@@ -176,7 +181,7 @@ function PageStyles() {
         background: #fff;
       }
       .actions { display: flex; gap: 0.5rem; }
-      button {
+      .page button {
         border: none;
         background: var(--accent);
         color: #fff;
@@ -185,14 +190,14 @@ function PageStyles() {
         font-weight: 600;
         cursor: pointer;
       }
-      button:hover { background: var(--accent-hover); }
-      button:disabled { opacity: 0.6; cursor: wait; }
-      button.ghost {
+      .page button:hover { background: var(--accent-hover); }
+      .page button:disabled { opacity: 0.6; cursor: wait; }
+      .page button.ghost {
         background: transparent;
         color: var(--ink);
         border: 1px solid var(--line);
       }
-      button.danger {
+      .page button.danger {
         background: transparent;
         color: var(--danger);
         border: 1px solid transparent;

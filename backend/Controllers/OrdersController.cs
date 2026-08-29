@@ -53,6 +53,25 @@ namespace Backend.Controllers
             return order is null ? NotFound() : Ok(order);
         }
 
+        /// <summary>
+        /// Simula o webhook do provedor Pix (aula 7). Só então o pedido entra na cozinha.
+        /// </summary>
+        [HttpPost("public/{publicId:guid}/confirm-payment")]
+        [AllowAnonymous]
+        public async Task<ActionResult<OrderDto>> ConfirmPayment(Guid publicId)
+        {
+            try
+            {
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var updated = await _service.ConfirmPaymentAsync(publicId, ip);
+                return updated is null ? NotFound() : Ok(updated);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet]
         [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Kitchen}")]
         public async Task<ActionResult<List<OrderDto>>> GetAll([FromQuery] string? status = null) =>

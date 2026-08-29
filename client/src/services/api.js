@@ -22,8 +22,24 @@ export function fetchCategories() {
   return request('/categories')
 }
 
-export function fetchMenuItems() {
-  return request('/menuitems?availableOnly=true')
+export function fetchMenuItems(availableOnly = false) {
+  const q = availableOnly ? '?availableOnly=true' : ''
+  return request(`/menuitems${q}`)
+}
+
+export function fetchRestaurant() {
+  return request('/restaurant')
+}
+
+export function fetchPublicTable(tableId) {
+  return request(`/tables/${tableId}/public`)
+}
+
+export function joinTable(tableId, payload) {
+  return request(`/tables/${tableId}/join`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }
 
 export function validateTableSession(accessToken) {
@@ -43,4 +59,10 @@ export function createOrder(payload) {
 
 export function fetchOrder(publicId) {
   return request(`/orders/public/${publicId}`)
+}
+
+export function confirmPayment(publicId) {
+  return request(`/orders/public/${publicId}/confirm-payment`, {
+    method: 'POST',
+  })
 }

@@ -11,23 +11,31 @@ namespace Backend.Services
     {
         private readonly IMenuItemRepository _repository;
         private readonly ApplicationDbContext _db;
+        private readonly IPromotionService _promotions;
 
-        public MenuItemService(IMenuItemRepository repository, ApplicationDbContext db)
+        public MenuItemService(
+            IMenuItemRepository repository,
+            ApplicationDbContext db,
+            IPromotionService promotions)
         {
             _repository = repository;
             _db = db;
+            _promotions = promotions;
         }
 
         public async Task<List<MenuItemDto>> GetAllAsync(bool onlyAvailable = false)
         {
             var items = await _repository.GetAllAsync(onlyAvailable);
-            return items.Select(ToDto).ToList();
+            var promos = await _promotions.GetLiveByMenuItemIdsAsync(items.Select(i => i.Id));
+            return items.Select(i => ToDto(i, promos.GetValueOrDefault(i.Id))).ToList();
         }
 
         public async Task<MenuItemDto?> GetByIdAsync(int id)
         {
             var item = await _repository.GetByIdAsync(id);
-            return item is null ? null : ToDto(item);
+            if (item is null) return null;
+            var promos = await _promotions.GetLiveByMenuItemIdsAsync([id]);
+            return ToDto(item, promos.GetValueOrDefault(id));
         }
 
         public async Task<MenuItemDto> CreateAsync(CreateMenuItemDto dto)
@@ -47,8 +55,7 @@ namespace Backend.Services
             };
 
             await _repository.AddAsync(item);
-            var created = await _repository.GetByIdAsync(item.Id);
-            return ToDto(created!);
+            return (await GetByIdAsync(item.Id))!;
         }
 
         public async Task<MenuItemDto?> UpdateAsync(int id, UpdateMenuItemDto dto)
@@ -68,8 +75,7 @@ namespace Backend.Services
             tracked.Available = dto.Available;
 
             await _db.SaveChangesAsync();
-            var updated = await _repository.GetByIdAsync(id);
-            return ToDto(updated!);
+            return await GetByIdAsync(id);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -118,8 +124,7 @@ namespace Backend.Services
             }
 
             await _db.SaveChangesAsync();
-            var updated = await _repository.GetByIdAsync(id);
-            return ToDto(updated!);
+            return await GetByIdAsync(id);
         }
 
         public async Task<bool> ClearPhotoAsync(int id)
@@ -141,15 +146,24 @@ namespace Backend.Services
                 throw new ArgumentException("O preço não pode ser negativo.");
         }
 
-        private static MenuItemDto ToDto(MenuItem item)
+        private static MenuItemDto ToDto(MenuItem item, Promotion? promo)
         {
             var hasPhoto = !string.IsNullOrEmpty(item.PhotoContentType);
+            var onPromo = promo is not null;
+            var effective = onPromo ? promo!.PromoPrice : item.Price;
+
             return new MenuItemDto
             {
                 Id = item.Id,
                 Name = item.Name,
                 Description = item.Description,
-                Price = item.Price,
+                Price = effective,
+                OriginalPrice = onPromo ? item.Price : null,
+                PromoPrice = onPromo ? promo!.PromoPrice : null,
+                DiscountPercent = onPromo
+                    ? PromotionService.CalcDiscountPercent(item.Price, promo!.PromoPrice)
+                    : null,
+                IsOnPromo = onPromo,
                 HasPhoto = hasPhoto,
                 PhotoUrl = hasPhoto ? $"/api/menuitems/{item.Id}/photo" : null,
                 CategoryId = item.CategoryId,

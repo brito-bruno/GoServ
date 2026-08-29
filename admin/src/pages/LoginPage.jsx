@@ -2,12 +2,26 @@ import React from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
+const PRESETS = {
+  admin: {
+    label: 'Admin',
+    email: 'admin@goserv.local',
+    password: 'admin123',
+  },
+  kitchen: {
+    label: 'Cozinha',
+    email: 'cozinha@goserv.local',
+    password: 'cozinha123',
+  },
+}
+
 export default function LoginPage() {
   const { login, isAuthenticated, ready } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [email, setEmail] = React.useState('admin@goserv.local')
-  const [password, setPassword] = React.useState('admin123')
+  const [email, setEmail] = React.useState('')
+  const [password, setPassword] = React.useState('')
+  const [preset, setPreset] = React.useState('')
   const [error, setError] = React.useState('')
   const [busy, setBusy] = React.useState(false)
 
@@ -16,6 +30,15 @@ export default function LoginPage() {
   React.useEffect(() => {
     if (ready && isAuthenticated) navigate(from, { replace: true })
   }, [ready, isAuthenticated, from, navigate])
+
+  function applyPreset(key) {
+    const p = PRESETS[key]
+    if (!p) return
+    setPreset(key)
+    setEmail(p.email)
+    setPassword(p.password)
+    setError('')
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -39,7 +62,20 @@ export default function LoginPage() {
       <form className="login-card" onSubmit={handleSubmit}>
         <p className="brand">GoServ</p>
         <h1>Acesso interno</h1>
-        <p className="sub">Admin e cozinha — use as credenciais de demo.</p>
+        <p className="sub">Escolha um perfil de demo ou digite as credenciais.</p>
+
+        <div className="presets" role="group" aria-label="Perfis de demo">
+          {Object.entries(PRESETS).map(([key, p]) => (
+            <button
+              key={key}
+              type="button"
+              className={`preset ${preset === key ? 'on' : ''}`}
+              onClick={() => applyPreset(key)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
 
         {error && <p className="error">{error}</p>}
 
@@ -50,7 +86,10 @@ export default function LoginPage() {
             required
             autoComplete="username"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setPreset('')
+            }}
           />
         </label>
         <label>
@@ -60,19 +99,16 @@ export default function LoginPage() {
             required
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              setPreset('')
+            }}
           />
         </label>
 
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="submit" disabled={busy}>
           {busy ? 'Entrando…' : 'Entrar'}
         </button>
-
-        <p className="hint">
-          Demo: <code>admin@goserv.local</code> / <code>admin123</code>
-          <br />
-          Cozinha: <code>cozinha@goserv.local</code> / <code>cozinha123</code>
-        </p>
       </form>
 
       <style>{`
@@ -102,20 +138,33 @@ export default function LoginPage() {
           letter-spacing: -0.03em;
           color: var(--accent);
         }
-        h1 {
-          margin: 0;
-          font-size: 1.2rem;
-        }
-        .sub, .hint {
+        h1 { margin: 0; font-size: 1.2rem; }
+        .sub {
           margin: 0;
           color: var(--muted);
           font-size: 0.88rem;
           line-height: 1.45;
         }
-        .hint code {
-          font-family: var(--mono);
-          font-size: 0.78rem;
+        .presets {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
         }
+        .preset {
+          border: 1px solid var(--line);
+          background: #fff;
+          color: var(--ink);
+          padding: 0.55rem 0.75rem;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .preset.on {
+          border-color: var(--accent);
+          background: rgba(31, 107, 74, 0.1);
+          color: var(--accent);
+        }
+        .preset:hover { border-color: var(--accent); }
         .error { margin: 0; color: var(--danger); font-size: 0.9rem; }
         label {
           display: flex;
@@ -130,7 +179,7 @@ export default function LoginPage() {
           padding: 0.6rem 0.7rem;
           background: #fff;
         }
-        button {
+        .submit {
           margin-top: 0.35rem;
           border: none;
           background: var(--accent);
@@ -140,8 +189,8 @@ export default function LoginPage() {
           font-weight: 600;
           cursor: pointer;
         }
-        button:hover { background: var(--accent-hover); }
-        button:disabled { opacity: 0.65; cursor: wait; }
+        .submit:hover { background: var(--accent-hover); }
+        .submit:disabled { opacity: 0.65; cursor: wait; }
       `}</style>
     </div>
   )

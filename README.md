@@ -40,8 +40,9 @@ npm run dev     # banco + API + client + admin
 
 | App | URL |
 |-----|-----|
-| Cardápio (cliente) | http://localhost:5173 |
-| Admin (estabelecimento) | http://localhost:5174 |
+| Cardápio (consulta) | http://localhost:5173/cardapio |
+| Mesa (QR + senha) | http://localhost:5173/m/{idMesa} |
+| Admin | http://localhost:5174 |
 | API | http://localhost:5000 |
 
 Atalho: **Ctrl+Shift+B** (task `GoServ: Dev`).
@@ -107,7 +108,12 @@ Identificadores em inglês; comentários/commits em português.
 | GET/POST | `/api/tables` | Mesas (auth) |
 | POST | `/api/tables/{id}/sessions` | Abrir sessão / QR |
 | GET | `/api/orders/addons/{menuItemId}` | Adicionais do produto |
-| POST | `/api/orders` | Criar pedido (total no servidor) |
+| POST | `/api/orders` | Criar pedido (`AwaitingPayment`) |
+| POST | `/api/orders/public/{uuid}/confirm-payment` | Simula webhook Pix → cozinha |
+| GET | `/api/qr` | Catálogo de links + senha do dia (auth) |
+| POST | `/api/qr/day-passcode/rotate` | Nova senha do dia |
+| GET | `/api/tables/{id}/public` | Dados públicos da mesa |
+| POST | `/api/tables/{id}/join` | Liberar mesa (nome + senha do dia) |
 | GET | `/api/orders/{id}` | Detalhe do pedido |
 | GET | `/api/orders` | Lista (Admin/Kitchen) |
 | PATCH | `/api/orders/{id}/status` | Atualizar status (cozinha) |
@@ -149,6 +155,8 @@ http://localhost:5173/mesa/{token}?kiosk=1
 - `?kiosk=0` desliga  
 
 Checklist manual do cardápio: [`docs/MANUAL_TEST_MENU.md`](docs/MANUAL_TEST_MENU.md)
+
+QR Codes: admin → **QR Codes**. No celular da mesma rede Wi‑Fi, ajuste `Restaurant:ClientPublicUrl` em `backend/appsettings.json` para o IP da máquina (ex.: `http://192.168.0.10:5173`) e reinicie a API — os QRs passam a apontar para esse endereço.
 
 CI (GitHub Actions): em cada PR — build/test do backend + lint/build do client e admin. Local: `npm run ci`.
 

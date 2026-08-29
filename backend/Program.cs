@@ -14,6 +14,8 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.Configure<SecurityOptions>(
     builder.Configuration.GetSection(SecurityOptions.SectionName));
+builder.Services.Configure<RestaurantOptions>(
+    builder.Configuration.GetSection(RestaurantOptions.SectionName));
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = ImageConverter.MaxUploadBytes;
@@ -27,11 +29,16 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:5174")
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+                var uri = new Uri(origin);
+                // Dev: localhost e IPs da rede local (celular na mesma Wi‑Fi)
+                return uri.Host is "localhost" or "127.0.0.1"
+                    || uri.Host.StartsWith("192.168.")
+                    || uri.Host.StartsWith("10.")
+                    || uri.Host.StartsWith("172.");
+            })
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
@@ -90,6 +97,8 @@ builder.Services.AddScoped<IAddonRepository, AddonRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IDayPasscodeService, DayPasscodeService>();
+builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IMenuItemService, MenuItemService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

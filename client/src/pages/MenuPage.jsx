@@ -12,27 +12,26 @@ import MenuItemCard from '../components/MenuItemCard'
 import CategoryTabs from '../components/CategoryTabs'
 import CustomizeModal from '../components/CustomizeModal'
 import CartBar from '../components/CartBar'
+import ClientTopBar from '../components/ClientTopBar'
+import PageLoading from '../components/PageLoading'
 
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
+const PROMO_TAB = 'promos'
 
-export default function MenuPage() {
+export default function MenuPage({ browseOnly = false }) {
   const { tableToken } = useParams()
   const kiosk = useKioskMode()
-  const { addLine } = useCart()
-  const homePath = tableToken ? `/mesa/${tableToken}` : '/'
-  useKioskIdleReset(homePath)
+  const cart = useCart()
+  const homePath = tableToken ? `/mesa/${tableToken}` : '/cardapio'
+  useKioskIdleReset(browseOnly ? null : homePath)
   const [session, setSession] = React.useState(null)
   const [categories, setCategories] = React.useState([])
   const [items, setItems] = React.useState([])
-  const [activeCategoryId, setActiveCategoryId] = React.useState(null)
+  const [activeCategoryId, setActiveCategoryId] = React.useState(PROMO_TAB)
   const [selectedItem, setSelectedItem] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
+
+  const canOrder = !browseOnly && Boolean(tableToken)
 
   React.useEffect(() => {
     let cancelled = false
@@ -49,12 +48,13 @@ export default function MenuPage() {
 
         const [cats, menu] = await Promise.all([
           fetchCategories(),
-          fetchMenuItems(),
+          fetchMenuItems(false),
         ])
         if (cancelled) return
         setCategories(cats)
         setItems(menu)
-        setActiveCategoryId(cats[0]?.id ?? null)
+        const hasPromo = menu.some((i) => i.isOnPromo && i.available !== false)
+        setActiveCategoryId(hasPromo ? PROMO_TAB : cats[0]?.id ?? PROMO_TAB)
       } catch (e) {
         if (!cancelled) {
           setError(
@@ -74,49 +74,59 @@ export default function MenuPage() {
     }
   }, [tableToken])
 
+  const tabs = React.useMemo(() => {
+    const list = [{ id: PROMO_TAB, name: 'Promoções' }]
+    return [...list, ...categories]
+  }, [categories])
+
   const visibleItems =
-    activeCategoryId == null
-      ? items
+    activeCategoryId === PROMO_TAB
+      ? items.filter((item) => item.isOnPromo)
       : items.filter((item) => item.categoryId === activeCategoryId)
 
-  return (
-    <div className="menu-page">
-      <header className="menu-header">
-        <p className="brand">
-          GoServ
-          {kiosk && <span className="kiosk-badge">Kiosk</span>}
-        </p>
-        <h1>Cardápio</h1>
-        <p className="subtitle">
-          {session
-            ? `${session.tableLabel} · sessão ativa`
-            : kiosk
-              ? 'Toque para montar seu pedido.'
-              : 'Escolha e peça direto da mesa.'}
-        </p>
-      </header>
+  function handleAdd(item) {
+    if (!canOrder || !item.available) return
+    setSelectedItem(item)
+  }
 
-      {loading && <p className="state">Carregando cardápio…</p>}
+  return (
+    <div className={`menu-page ${browseOnly ? 'browse' : ''}`}>
+      <PageLoading active={loading} />
+      <ClientTopBar tableLabel={session?.tableLabel} />
+      {browseOnly && (
+        <p className="browse-banner">
+          Cardápio para consulta. Para pedir, escaneie o QR da sua mesa.
+        </p>
+      )}
+      {session?.guestName && (
+        <p className="guest-line">Olá, {session.guestName}</p>
+      )}
+      {kiosk && <p className="kiosk-line">Modo kiosk</p>}
+
       {error && <p className="state error">{error}</p>}
 
-      {!loading && !error && (
+      {!error && (
         <>
           <CategoryTabs
-            categories={categories}
+            categories={tabs}
             activeId={activeCategoryId}
             onChange={setActiveCategoryId}
           />
 
           <section className="menu-grid" aria-live="polite">
-            {visibleItems.length === 0 ? (
-              <p className="state">Nenhum item nesta categoria.</p>
+            {!loading && visibleItems.length === 0 ? (
+              <p className="state">
+                {activeCategoryId === PROMO_TAB
+                  ? 'Nenhuma promoção no momento.'
+                  : 'Nenhum item nesta categoria.'}
+              </p>
             ) : (
               visibleItems.map((item) => (
                 <MenuItemCard
                   key={item.id}
                   item={item}
-                  priceLabel={formatPrice(item.price)}
-                  onAdd={setSelectedItem}
+                  onAdd={canOrder ? handleAdd : undefined}
+                  browseOnly={browseOnly}
                 />
               ))
             )}
@@ -124,57 +134,52 @@ export default function MenuPage() {
         </>
       )}
 
-      {selectedItem && (
+      {selectedItem && canOrder && cart && (
         <CustomizeModal
           item={selectedItem}
+          tableLabel={session?.tableLabel}
           onClose={() => setSelectedItem(null)}
           onConfirm={(payload) => {
-            addLine(payload)
+            cart.addLine(payload)
             setSelectedItem(null)
           }}
         />
       )}
 
-      <CartBar tableToken={tableToken} />
+      {canOrder && <CartBar tableToken={tableToken} />}
 
       <style>{`
         .menu-page {
           max-width: 720px;
           margin: 0 auto;
-          padding: 1.5rem 1.25rem 5.5rem;
+          padding: 0.75rem max(1rem, env(safe-area-inset-right)) 5.5rem max(1rem, env(safe-area-inset-left));
         }
-        .menu-header {
-          margin-bottom: 1.75rem;
-        }
-        .brand {
-          margin: 0 0 0.35rem;
-          font-family: var(--display);
-          font-size: clamp(2rem, 8vw, 2.75rem);
-          font-weight: 700;
-          letter-spacing: -0.03em;
+        .menu-page.browse { padding-bottom: 2rem; }
+        .browse-banner {
+          margin: 0 0 0.85rem;
+          padding: 0.65rem 0.75rem;
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          background: var(--accent-soft);
           color: var(--accent);
+          font-size: 0.85rem;
+          line-height: 1.4;
         }
-        .menu-header h1 {
-          margin: 0;
-          font-size: 1.15rem;
-          font-weight: 500;
-          color: var(--text);
-        }
-        .subtitle {
-          margin: 0.4rem 0 0;
-          color: var(--muted);
-          font-size: 0.95rem;
-        }
-        .menu-grid {
-          display: grid;
-          gap: 1rem;
-        }
-        .state {
+        .guest-line {
+          margin: -0.25rem 0 0.65rem;
+          font-size: 0.9rem;
           color: var(--muted);
         }
-        .state.error {
-          color: var(--danger);
+        .kiosk-line {
+          margin: -0.35rem 0 0.75rem;
+          font-size: 0.75rem;
+          color: var(--muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
         }
+        .menu-grid { display: grid; gap: 0.15rem; }
+        .state { color: var(--muted); }
+        .state.error { color: var(--danger); }
       `}</style>
     </div>
   )
