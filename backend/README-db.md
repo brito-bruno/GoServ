@@ -1,24 +1,18 @@
-PostgreSQL setup and migrations
+# Banco de dados (PostgreSQL)
 
-- Update the connection in `appsettings.json` (`ConnectionStrings:DefaultConnection`).
-- To use EF Core migrations (recommended):
+Em desenvolvimento o banco sobe com Docker:
 
-```bash
-cd backend
-dotnet tool install --global dotnet-ef # if not installed
-dotnet restore
-dotnet ef migrations add InitialCreate
-dotnet ef database update
+```powershell
+# na raiz do monorepo
+npm run db:up
 ```
 
-- Alternatively run the provided SQL script against your Postgres server:
+Connection string (já configurada em `appsettings.json`):
 
-```bash
-psql "host=localhost port=5432 dbname=postgres user=postgres" -f db/init.sql
+```
+Host=localhost;Port=5433;Database=goserv;Username=postgres;Password=postgres
 ```
 
-Adjust credentials/host as needed. After DB is created, run the API:
+O schema é criado pelas **migrations do EF Core** quando a API inicia.
 
-```bash
-dotnet run --project backend
-```
+O arquivo `db/init.sql` é apenas referência/manual; não é usado pelo fluxo padrão (`npm run dev`).

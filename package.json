@@ -1,10 +1,26 @@
 {
-  "name": "goserv-root",
+  "name": "goserv",
   "version": "0.1.0",
   "private": true,
+  "description": "Monorepo GoServ — cardápio QR (client) + admin + ASP.NET Core + PostgreSQL",
   "scripts": {
-    "db:run": "docker-compose up -d db",
-    "db": "docker-compose up -d db",
-    "db:down": "docker-compose down"
+    "setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup.ps1",
+    "dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start.ps1",
+    "start": "powershell -ExecutionPolicy Bypass -File ./scripts/start.ps1",
+    "stop": "powershell -ExecutionPolicy Bypass -File ./scripts/stop.ps1",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "db:export": "powershell -ExecutionPolicy Bypass -File ./scripts/db-export.ps1",
+    "db:restore": "powershell -ExecutionPolicy Bypass -File ./scripts/db-restore.ps1",
+    "backend": "dotnet run --project ./backend --launch-profile http",
+    "test": "dotnet test ./tests/Backend.Tests/Backend.Tests.csproj",
+    "client": "npm run dev --prefix client",
+    "admin": "npm run dev --prefix admin",
+    "client:install": "npm install --prefix client",
+    "admin:install": "npm install --prefix admin"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

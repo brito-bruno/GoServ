@@ -1,10 +1,14 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Backend.Data;
 
 #nullable disable
 
 namespace Backend.Migrations
 {
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260827_InitialCreate")]
     public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
