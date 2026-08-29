@@ -59,12 +59,18 @@ GoServ/
 │   └── src/
 │       ├── pages/
 │       ├── components/
-│       └── services/
-├── admin/                    # App interno (gestão; cozinha depois)
+│       ├── cart/
+│       ├── hooks/
+│       ├── services/         # Chamadas HTTP / SignalR
+│       └── utils/            # Funções reutilizáveis (preço, data…)
+├── admin/                    # App interno (gestão + cozinha)
 │   └── src/
 │       ├── pages/
 │       ├── components/
-│       └── services/
+│       │   └── ui/           # Select, Checkbox, ImageUpload…
+│       ├── auth/
+│       ├── services/
+│       └── utils/            # Funções reutilizáveis (preço, data, crop…)
 ├── backend/
 │   ├── Controllers/          # HTTP
 │   ├── Services/             # Regras de negócio
@@ -72,6 +78,7 @@ GoServ/
 │   ├── Models/
 │   ├── Dtos/
 │   ├── Data/                 # DbContext + seed
+│   ├── db/                   # Snapshot PostgreSQL compartilhado
 │   └── Migrations/
 ├── docs/
 │   ├── ARCHITECTURE.md
@@ -82,15 +89,16 @@ GoServ/
 ```
 
 Padrão do backend: **Controller → Service → Repository**.  
+Frontends: lógica de tela em `pages/`; HTTP em `services/`; helpers compartilhados em `utils/` (um lugar só para manutenção).  
 Identificadores em inglês; comentários/commits em português.
 
 ---
 
 ## Fluxo simples (MVP)
 
-1. Cliente escaneia QR → vê cardápio no **client**
-2. Admin cadastra produtos/categorias no **admin**
-3. (Próximas aulas) Pedido + Pix + painel da cozinha em tempo real
+1. Admin cadastra categorias, produtos (com foto), promoções e mesas
+2. Cliente escaneia QR da mesa → nome + senha do dia → cardápio / pedido / Pix
+3. Após pagamento (simulado), o pedido aparece na **Cozinha** em tempo real (SignalR)
 
 ---
 
@@ -105,6 +113,7 @@ Identificadores em inglês; comentários/commits em português.
 | GET/POST/PUT/DELETE | `/api/menuitems` | CRUD (escrita = Admin) |
 | GET | `/api/menuitems?availableOnly=true` | Cardápio público |
 | GET/POST/DELETE | `/api/menuitems/{id}/photo` | Foto JPEG no banco |
+| GET/POST/PUT/DELETE | `/api/promotions` | Promoções (escrita = Admin) |
 | GET/POST | `/api/tables` | Mesas (auth) |
 | POST | `/api/tables/{id}/sessions` | Abrir sessão / QR |
 | GET | `/api/orders/addons/{menuItemId}` | Adicionais do produto |
@@ -162,7 +171,7 @@ CI (GitHub Actions): em cada PR — build/test do backend + lint/build do client
 
 Decisões técnicas: [`docs/DECISIONS.md`](docs/DECISIONS.md)
 
-Seed automático: cardápio, mesas e usuários de demo.
+Seed automático: usuários Admin e Cozinha (cardápio/mesas vêm do snapshot ou do cadastro).
 
 | Perfil | E-mail | Senha |
 |--------|--------|-------|

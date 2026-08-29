@@ -1,14 +1,9 @@
+import { formatPrice } from '../utils'
+
 export default function MenuItemCard({ item, onAdd, browseOnly = false }) {
   const unavailable = item.available === false
   const canAdd = Boolean(onAdd) && !unavailable && !browseOnly
   const onPromo = Boolean(item.isOnPromo && item.originalPrice != null)
-
-  function formatPrice(value) {
-    return Number(value).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    })
-  }
 
   return (
     <article className={`menu-card ${unavailable ? 'off' : ''}`}>

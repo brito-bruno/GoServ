@@ -1,12 +1,6 @@
 import React from 'react'
 import { fetchAddons } from '../services/api'
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
+import { formatPrice } from '../utils'
 
 export default function CustomizeModal({ item, tableLabel, onClose, onConfirm }) {
   const [addons, setAddons] = React.useState([])

@@ -1,12 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../cart/CartContext'
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
+import { formatPrice } from '../utils'
 
 export default function CartBar({ tableToken }) {
   const { itemCount, estimateTotal } = useCart()

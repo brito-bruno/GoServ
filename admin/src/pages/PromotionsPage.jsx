@@ -1,25 +1,13 @@
 import React from 'react'
 import { api } from '../services/api'
 import { Checkbox, Select, useContentLoading } from '../components/ui'
-
-function toLocalInput(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function defaultRange() {
-  const start = new Date()
-  const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)
-  return { startsAt: toLocalInput(start.toISOString()), endsAt: toLocalInput(end.toISOString()) }
-}
+import { toLocalInput, defaultDateRange, formatMoney, formatDateTime } from '../utils'
 
 const empty = {
   menuItemId: '',
   promoPrice: '',
-  startsAt: defaultRange().startsAt,
-  endsAt: defaultRange().endsAt,
+  startsAt: defaultDateRange().startsAt,
+  endsAt: defaultDateRange().endsAt,
   active: true,
 }
 
@@ -60,7 +48,7 @@ export default function PromotionsPage() {
 
   function reset() {
     setEditingId(null)
-    setForm({ ...empty, ...defaultRange() })
+    setForm({ ...empty, ...defaultDateRange() })
   }
 
   function startEdit(p) {
@@ -156,7 +144,7 @@ export default function PromotionsPage() {
             />
             {listPrice != null && (
               <span className="hint">
-                Preço normal: {listPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                Preço normal: {formatMoney(listPrice)}
               </span>
             )}
           </label>
@@ -216,26 +204,16 @@ export default function PromotionsPage() {
                   <span className="pct">-{p.discountPercent}%</span>
                 </td>
                 <td>
-                  <s className="old">
-                    {Number(p.listPrice).toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </s>{' '}
-                  <span className="new">
-                    {Number(p.promoPrice).toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
+                  <s className="old">{formatMoney(p.listPrice)}</s>{' '}
+                  <span className="new">{formatMoney(p.promoPrice)}</span>
                 </td>
                 <td className="muted">
-                  {new Date(p.startsAt).toLocaleString('pt-BR', {
+                  {formatDateTime(p.startsAt, {
                     dateStyle: 'short',
                     timeStyle: 'short',
                   })}
                   {' → '}
-                  {new Date(p.endsAt).toLocaleString('pt-BR', {
+                  {formatDateTime(p.endsAt, {
                     dateStyle: 'short',
                     timeStyle: 'short',
                   })}

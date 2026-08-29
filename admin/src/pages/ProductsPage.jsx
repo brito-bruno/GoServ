@@ -1,6 +1,7 @@
 import React from 'react'
 import { api } from '../services/api'
 import { Checkbox, Select, ImageUpload, useContentLoading } from '../components/ui'
+import { formatMoney } from '../utils'
 
 const emptyForm = {
   name: '',
@@ -262,12 +263,7 @@ export default function ProductsPage() {
                   </div>
                 </td>
                 <td>{item.categoryName || '—'}</td>
-                <td>
-                  {Number(item.originalPrice ?? item.price).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </td>
+                <td>{formatMoney(item.originalPrice ?? item.price)}</td>
                 <td>
                   <button
                     type="button"

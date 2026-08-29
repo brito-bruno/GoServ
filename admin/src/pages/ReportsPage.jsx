@@ -1,26 +1,7 @@
 import React from 'react'
 import { api } from '../services/api'
 import { useContentLoading } from '../components/ui'
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-function todayInputValue() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function formatDayLabel(isoDate) {
-  const [y, m, d] = isoDate.split('-')
-  return `HOJE · ${d}/${m}/${y}`
-}
+import { formatPrice, todayInputValue, formatDayLabel } from '../utils'
 
 export default function ReportsPage() {
   const date = todayInputValue()

@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../services/api'
 import { useContentLoading } from '../components/ui'
+import { formatMoney, formatDateTime } from '../utils'
 
 export default function TablesPage() {
   const [tables, setTables] = React.useState([])
@@ -90,13 +91,6 @@ export default function TablesPage() {
     }
   }
 
-  function formatMoney(value) {
-    return Number(value).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    })
-  }
-
   return (
     <section className="page">
       <header>
@@ -151,7 +145,7 @@ export default function TablesPage() {
                   {table.activeSession ? (
                     <span className="on">
                       Aberta até{' '}
-                      {new Date(table.activeSession.expiresAt).toLocaleString('pt-BR')}
+                      {formatDateTime(table.activeSession.expiresAt)}
                       <br />
                       {formatMoney(table.activeSession.spent)} /{' '}
                       {formatMoney(table.activeSession.spendingCap)} ·{' '}

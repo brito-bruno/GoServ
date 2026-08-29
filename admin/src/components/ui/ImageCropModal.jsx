@@ -1,6 +1,6 @@
 import React from 'react'
 import Cropper from 'react-easy-crop'
-import { getCroppedImageBlob } from './cropImage'
+import { getCroppedImageBlob } from '../../utils/cropImage'
 
 /**
  * Modal de recorte 1:1 (react-easy-crop): zoom, pan e rotação.

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { fetchOrder } from '../services/api'
 import { connectOrderHub } from '../services/orderHub'
 import ClientTopBar from '../components/ClientTopBar'
+import { formatPrice, formatClock } from '../utils'
 
 const STATUS_LABEL = {
   AwaitingPayment: 'Aguardando pagamento',
@@ -20,20 +21,6 @@ const TRACK_STEPS = [
   { key: 'Preparing', label: 'Em preparo' },
   { key: 'Ready', label: 'Pronto' },
 ]
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-function formatClock(iso) {
-  return new Date(iso).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 function stepState(orderStatus, stepKey) {
   if (orderStatus === 'AwaitingPayment' || orderStatus === 'Cancelled') {

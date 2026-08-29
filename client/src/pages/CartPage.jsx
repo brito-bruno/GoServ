@@ -4,13 +4,7 @@ import { useCart } from '../cart/CartContext'
 import { useKioskIdleReset } from '../hooks/useKioskIdleReset'
 import { createOrder, validateTableSession } from '../services/api'
 import ClientTopBar from '../components/ClientTopBar'
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
+import { formatPrice } from '../utils'
 
 export default function CartPage() {
   const { tableToken } = useParams()

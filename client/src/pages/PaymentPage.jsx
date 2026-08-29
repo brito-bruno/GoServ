@@ -4,23 +4,7 @@ import { confirmPayment, fetchOrder } from '../services/api'
 import { connectOrderHub } from '../services/orderHub'
 import { useKioskIdleReset } from '../hooks/useKioskIdleReset'
 import ClientTopBar from '../components/ClientTopBar'
-
-function formatPrice(value) {
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  })
-}
-
-function formatCountdown(expiresAt) {
-  if (!expiresAt) return '--:--'
-  const ms = new Date(expiresAt).getTime() - Date.now()
-  if (ms <= 0) return '00:00'
-  const totalSec = Math.floor(ms / 1000)
-  const m = String(Math.floor(totalSec / 60)).padStart(2, '0')
-  const s = String(totalSec % 60).padStart(2, '0')
-  return `${m}:${s}`
-}
+import { formatPrice, formatCountdown } from '../utils'
 
 export default function PaymentPage() {
   const { orderId: publicId, tableToken } = useParams()

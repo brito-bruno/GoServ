@@ -2,17 +2,13 @@ import React from 'react'
 import { api } from '../services/api'
 import { connectKitchenHub } from '../services/kitchenHub'
 import { useContentLoading } from '../components/ui'
+import { elapsedLabel } from '../utils'
 
 const COLUMNS = [
   { status: 'Received', title: 'Recebido', next: 'Preparing', nextLabel: 'Iniciar preparo' },
   { status: 'Preparing', title: 'Em preparo', next: 'Ready', nextLabel: 'Marcar como pronto' },
   { status: 'Ready', title: 'Pronto', next: 'Delivered', nextLabel: 'Confirmar entrega' },
 ]
-
-function elapsedLabel(iso) {
-  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000))
-  return `${mins} min`
-}
 
 export default function KitchenPage() {
   const [orders, setOrders] = React.useState([])
